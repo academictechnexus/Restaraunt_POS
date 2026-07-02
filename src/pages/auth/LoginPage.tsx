@@ -1,8 +1,42 @@
+// @ts-nocheck
 import { useState } from 'react'
 import { Navigate } from 'react-router-dom'
 import { useAuth } from '@/context/AuthContext'
-import { UtensilsCrossed, Eye, EyeOff, Loader2 } from 'lucide-react'
+import { UtensilsCrossed, Eye, EyeOff, Loader2, Zap } from 'lucide-react'
 import toast from 'react-hot-toast'
+
+const DEMO_ACCOUNTS = [
+  {
+    role: 'Admin',
+    desc: 'Full access — all 17 features',
+    email: 'admin@myrestaurant.com',
+    password: 'Admin@123',
+    color: '#7c3aed',
+    bg: '#f5f3ff',
+    border: '#ddd6fe',
+    icon: '👑',
+  },
+  {
+    role: 'Manager',
+    desc: 'Reports, KDS, inventory, CRM',
+    email: 'manager@myrestaurant.com',
+    password: 'Manager@123',
+    color: '#1d4ed8',
+    bg: '#eff6ff',
+    border: '#bfdbfe',
+    icon: '📊',
+  },
+  {
+    role: 'Cashier',
+    desc: 'Tables, orders, billing, KOT',
+    email: 'cashier@myrestaurant.com',
+    password: 'Cashier@123',
+    color: '#059669',
+    bg: '#f0fdf4',
+    border: '#bbf7d0',
+    icon: '🧾',
+  },
+]
 
 export default function LoginPage() {
   const { user, signIn } = useAuth()
@@ -10,6 +44,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState('')
   const [showPass, setShowPass] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [demoLoading, setDemoLoading] = useState<string | null>(null)
 
   if (user) return <Navigate to="/" replace />
 
@@ -19,58 +54,183 @@ export default function LoginPage() {
     try {
       await signIn(email, password)
     } catch (err: any) {
-      toast.error(err.message || 'Login failed')
+      toast.error('Invalid email or password')
     } finally {
       setLoading(false)
     }
   }
 
+  async function handleDemo(account: typeof DEMO_ACCOUNTS[0]) {
+    setDemoLoading(account.role)
+    try {
+      await signIn(account.email, account.password)
+      toast.success(`Welcome! Logged in as ${account.role}`)
+    } catch (err: any) {
+      // If demo account doesn't exist yet, show helpful message
+      toast.error(`Demo account not set up yet. Use: ${account.email} / ${account.password}`)
+    } finally {
+      setDemoLoading(null)
+    }
+  }
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-600 to-blue-800 flex items-center justify-center p-4">
-      <div className="w-full max-w-sm">
+    <div style={{
+      minHeight: '100vh',
+      background: 'linear-gradient(135deg, #1e3a5f 0%, #1d4ed8 60%, #7c3aed 100%)',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: '16px',
+      fontFamily: '-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif'
+    }}>
+      <div style={{ width: '100%', maxWidth: 420 }}>
+
         {/* Logo */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-white rounded-2xl shadow-lg mb-4">
-            <UtensilsCrossed className="w-8 h-8 text-blue-600" />
+        <div style={{ textAlign: 'center', marginBottom: 28 }}>
+          <div style={{
+            width: 64, height: 64,
+            background: 'rgba(255,255,255,0.15)',
+            borderRadius: 20,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            margin: '0 auto 12px',
+            backdropFilter: 'blur(10px)',
+            border: '1px solid rgba(255,255,255,0.2)'
+          }}>
+            <UtensilsCrossed style={{ width: 32, height: 32, color: 'white' }} />
           </div>
-          <h1 className="text-2xl font-bold text-white">RestaurantOS</h1>
-          <p className="text-blue-200 text-sm mt-1">Sign in to your account</p>
+          <h1 style={{ color: 'white', fontSize: 28, fontWeight: 700, margin: 0 }}>RestaurantOS</h1>
+          <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: 14, marginTop: 4 }}>
+            Complete Restaurant POS System
+          </p>
         </div>
 
-        {/* Form */}
-        <div className="bg-white rounded-3xl shadow-2xl p-6">
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="label">Email address</label>
+        {/* Demo buttons */}
+        <div style={{
+          background: 'rgba(255,255,255,0.1)',
+          backdropFilter: 'blur(10px)',
+          border: '1px solid rgba(255,255,255,0.2)',
+          borderRadius: 20,
+          padding: 20,
+          marginBottom: 16
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
+            <Zap style={{ width: 16, height: 16, color: '#fbbf24' }} />
+            <p style={{ color: 'white', fontSize: 13, fontWeight: 600, margin: 0 }}>
+              Try Demo — One Click Login
+            </p>
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {DEMO_ACCOUNTS.map(account => (
+              <button
+                key={account.role}
+                onClick={() => handleDemo(account)}
+                disabled={demoLoading !== null}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 12,
+                  padding: '12px 16px',
+                  background: account.bg,
+                  border: `2px solid ${account.border}`,
+                  borderRadius: 14,
+                  cursor: 'pointer',
+                  transition: 'all 0.2s',
+                  opacity: demoLoading && demoLoading !== account.role ? 0.6 : 1,
+                  width: '100%',
+                  textAlign: 'left',
+                }}
+              >
+                <span style={{ fontSize: 24 }}>{account.icon}</span>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: account.color }}>
+                    {account.role}
+                  </div>
+                  <div style={{ fontSize: 11, color: '#6b7280', marginTop: 1 }}>
+                    {account.desc}
+                  </div>
+                </div>
+                {demoLoading === account.role ? (
+                  <div style={{
+                    width: 20, height: 20, border: `2px solid ${account.color}`,
+                    borderTopColor: 'transparent', borderRadius: '50%',
+                    animation: 'spin 0.8s linear infinite'
+                  }} />
+                ) : (
+                  <div style={{
+                    background: account.color, color: 'white',
+                    borderRadius: 8, padding: '4px 10px', fontSize: 11, fontWeight: 600
+                  }}>
+                    Try →
+                  </div>
+                )}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Divider */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+          <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.2)' }} />
+          <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: 12 }}>or sign in with your account</span>
+          <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.2)' }} />
+        </div>
+
+        {/* Login form */}
+        <div style={{
+          background: 'white',
+          borderRadius: 20,
+          padding: 24,
+          boxShadow: '0 20px 60px rgba(0,0,0,0.3)'
+        }}>
+          <form onSubmit={handleSubmit}>
+            <div style={{ marginBottom: 14 }}>
+              <label style={{ display: 'block', fontSize: 12, color: '#6b7280', marginBottom: 6, fontWeight: 500 }}>
+                Email address
+              </label>
               <input
                 type="email"
-                className="input"
+                style={{
+                  width: '100%', padding: '10px 14px', borderRadius: 10,
+                  border: '1.5px solid #e5e7eb', fontSize: 14, outline: 'none',
+                  boxSizing: 'border-box', transition: 'border-color 0.2s'
+                }}
                 placeholder="you@restaurant.com"
                 value={email}
                 onChange={e => setEmail(e.target.value)}
                 required
-                autoComplete="email"
               />
             </div>
 
-            <div>
-              <label className="label">Password</label>
-              <div className="relative">
+            <div style={{ marginBottom: 20 }}>
+              <label style={{ display: 'block', fontSize: 12, color: '#6b7280', marginBottom: 6, fontWeight: 500 }}>
+                Password
+              </label>
+              <div style={{ position: 'relative' }}>
                 <input
                   type={showPass ? 'text' : 'password'}
-                  className="input pr-10"
+                  style={{
+                    width: '100%', padding: '10px 40px 10px 14px', borderRadius: 10,
+                    border: '1.5px solid #e5e7eb', fontSize: 14, outline: 'none',
+                    boxSizing: 'border-box'
+                  }}
                   placeholder="••••••••"
                   value={password}
                   onChange={e => setPassword(e.target.value)}
                   required
-                  autoComplete="current-password"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPass(!showPass)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  style={{
+                    position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)',
+                    background: 'none', border: 'none', cursor: 'pointer', color: '#9ca3af'
+                  }}
                 >
-                  {showPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  {showPass
+                    ? <EyeOff style={{ width: 16, height: 16 }} />
+                    : <Eye style={{ width: 16, height: 16 }} />
+                  }
                 </button>
               </div>
             </div>
@@ -78,33 +238,29 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="btn-primary btn-lg w-full mt-2"
+              style={{
+                width: '100%', padding: '12px', background: '#1d4ed8',
+                color: 'white', border: 'none', borderRadius: 12,
+                fontSize: 14, fontWeight: 600, cursor: 'pointer',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                opacity: loading ? 0.7 : 1
+              }}
             >
-              {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Sign In'}
+              {loading ? <Loader2 style={{ width: 18, height: 18, animation: 'spin 1s linear infinite' }} /> : 'Sign In'}
             </button>
           </form>
-
-          {/* Role hint */}
-          <div className="mt-5 pt-5 border-t border-gray-100">
-            <p className="text-xs text-center text-gray-500 mb-3">Demo accounts</p>
-            <div className="grid grid-cols-3 gap-2">
-              {[
-                { role: 'Admin', color: 'purple' },
-                { role: 'Manager', color: 'blue' },
-                { role: 'Cashier', color: 'green' },
-              ].map(({ role, color }) => (
-                <div key={role} className={`text-center py-2 rounded-xl bg-${color}-50 border border-${color}-100`}>
-                  <p className={`text-xs font-medium text-${color}-700`}>{role}</p>
-                </div>
-              ))}
-            </div>
-          </div>
         </div>
 
-        <p className="text-center text-blue-200 text-xs mt-6">
+        <p style={{ textAlign: 'center', color: 'rgba(255,255,255,0.4)', fontSize: 12, marginTop: 20 }}>
           © 2026 RestaurantOS · Made in India 🇮🇳
         </p>
       </div>
+
+      <style>{`
+        @keyframes spin { to { transform: rotate(360deg); } }
+        button:hover { transform: translateY(-1px); }
+        button:active { transform: scale(0.98); }
+      `}</style>
     </div>
   )
 }
